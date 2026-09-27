@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>For Divya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rozha+One&family=Hanken+Grotesk:wght@400;500&family=IBM+Plex+Mono&display=swap">
+<style>
+  :root{--ink:#34363C;--paper:#FBF3EE;--blush:#E6C6B8;--marigold:#D4881A}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--ink);color:var(--paper);font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    padding:calc(24px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+  .card{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center}
+  .eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush)}
+  h1{font-family:"Rozha One",Georgia,serif;font-weight:400;font-size:42px;line-height:1.05;color:var(--blush);margin:0}
+  p{margin:0;color:rgba(251,243,238,.72);font-size:15px}
+  .dots{display:flex;gap:16px;height:18px}
+  .dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--blush);transition:background .15s}
+  .dot.on{background:var(--blush)}
+  .dots.shake{animation:shake .4s}
+  .dots.busy .dot{animation:pulse .9s infinite alternate}
+  @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+  @keyframes pulse{to{opacity:.35}}
+  .pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px 22px;justify-content:center}
+  .key{width:72px;height:72px;border-radius:50%;border:0;cursor:pointer;background:rgba(230,198,184,.12);color:var(--paper);
+    font-family:inherit;font-size:26px;font-weight:500;transition:background .15s,transform .1s}
+  .key:hover{background:rgba(230,198,184,.22)}
+  .key:active{transform:scale(.94);background:rgba(212,136,26,.5)}
+  .key.ghost{background:transparent;font-size:14px;letter-spacing:.06em}
+  .key:focus-visible{outline:3px solid var(--marigold);outline-offset:3px}
+  #hint{min-height:22px;font-size:14px;color:var(--marigold)}
+  @media (max-width:420px){.pad{grid-template-columns:repeat(3,66px);gap:12px 20px}.key{width:66px;height:66px}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="card" role="dialog" aria-labelledby="t">
+  <div class="eyebrow">Sirf ek pretty padosi ke liye</div>
+  <h1 id="t">Haanji, Divya</h1>
+  <p>Enter the 4-digit code to open your surprise.</p>
+  <div class="dots" id="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div id="hint" role="status" aria-live="polite"></div>
+  <div class="pad" id="pad">
+    <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+    <button class="key ghost" data-k="hint">Hint</button><button class="key" data-k="0">0</button><button class="key ghost" data-k="del" aria-label="Delete last digit">Delete</button>
+  </div>
+</div>
+<script>
+(function(){
+  var entry = "", tries = 0, busy = false, payload = null;
+  var dots = document.querySelectorAll('.dot'), wrap = document.getElementById('dots'), hint = document.getElementById('hint');
+  var ready = fetch('payload.json', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){ payload = j; })
+    .catch(function(){ hint.textContent = "Couldn't load the surprise. Check your connection and refresh."; });
+  function b64(s){ var b = atob(s), u = new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+  function paint(){ dots.forEach(function(d,i){ d.classList.toggle('on', i < entry.length); }); }
+  function wrong(){
+    tries++;
+    wrap.classList.remove('shake'); void wrap.offsetWidth; wrap.classList.add('shake');
+    hint.textContent = tries >= 2 ? "Aree, your birthday. DDMM." : "Hehe, not quite. Try again.";
+    setTimeout(function(){ entry = ""; paint(); }, 380);
+  }
+  function tryCode(code){
+    busy = true; wrap.classList.add('busy'); hint.textContent = "Opening…";
+    ready.then(function(){
+      var enc = new TextEncoder();
+      return crypto.subtle.importKey('raw', enc.encode(code), 'PBKDF2', false, ['deriveKey'])
+        .then(function(k){ return crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(payload.s), iterations:payload.n, hash:'SHA-256'}, k, {name:'AES-GCM', length:256}, false, ['decrypt']); })
+        .then(function(key){ return crypto.subtle.decrypt({name:'AES-GCM', iv:b64(payload.i)}, key, b64(payload.c)); });
+    }).then(function(buf){
+      var html = new TextDecoder().decode(buf);
+      document.open(); document.write(html); document.close();
+    }).catch(function(){
+      busy = false; wrap.classList.remove('busy'); wrong();
+    });
+  }
+  function press(k){
+    if(busy) return;
+    if(k === 'del'){ entry = entry.slice(0,-1); paint(); return; }
+    if(k === 'hint'){ hint.textContent = "A day and a month you know very well."; return; }
+    if(entry.length >= 4) return;
+    entry += k; paint();
+    if(entry.length === 4) setTimeout(function(){ tryCode(entry); }, 120);
+  }
+  document.getElementById('pad').addEventListener('click', function(e){ var b = e.target.closest('.key'); if(b) press(b.getAttribute('data-k')); });
+  document.addEventListener('keydown', function(e){ if(/^[0-9]$/.test(e.key)) press(e.key); else if(e.key === 'Backspace') press('del'); });
+})();
+</script>
+</body>
+</html>

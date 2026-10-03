@@ -19,6 +19,8 @@
   .eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--blush)}
   h1{font-family:"Rozha One",Georgia,serif;font-weight:400;font-size:42px;line-height:1.05;color:var(--blush);margin:0}
   p{margin:0;color:rgba(251,243,238,.72);font-size:15px}
+  .verse{font-family:"Rozha One",Georgia,serif;font-size:22px;line-height:1.45;color:var(--paper)}
+  .small{font-size:14px}
   .dots{display:flex;gap:16px;height:18px}
   .dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--blush);transition:background .15s}
   .dot.on{background:var(--blush)}
@@ -40,9 +42,9 @@
 </head>
 <body>
 <div class="card" role="dialog" aria-labelledby="t">
-  <div class="eyebrow">Sirf ek pretty padosi ke liye</div>
-  <h1 id="t">Haanji, Divya</h1>
-  <p>Enter the 4-digit code to open your surprise.</p>
+  <p class="verse" lang="pa">Akhiyan vich ik noor jeha,<br>Haase vich ik geet jeha,<br>Jithe vi tu pair dhare,<br>Uthe mausam meet jeha.</p>
+  <h1 id="t">For Divya</h1>
+  <p class="small">Enter the 4-digit code to open your surprise.</p>
   <div class="dots" id="dots" aria-hidden="true"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
   <div id="hint" role="status" aria-live="polite"></div>
   <div class="pad" id="pad">
@@ -63,7 +65,7 @@
   function wrong(){
     tries++;
     wrap.classList.remove('shake'); void wrap.offsetWidth; wrap.classList.add('shake');
-    hint.textContent = tries >= 2 ? "Aree, your birthday. DDMM." : "Hehe, not quite. Try again.";
+    hint.textContent = tries >= 2 ? "Hint: your birthday, as DDMM." : "Not quite. Please try again.";
     setTimeout(function(){ entry = ""; paint(); }, 380);
   }
   function tryCode(code){
